@@ -6,10 +6,8 @@
 
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/Compositor.hpp>
-#include <hyprland/src/helpers/Workspace.hpp>
 
 #include "globals.hpp"
-
 
 const std::string k_workspaceCount = "plugin:split-monitor-workspaces:count";
 const std::string k_keepFocused = "plugin:split-monitor-workspaces:keep_focused";
@@ -53,7 +51,8 @@ struct Window {
 		handle = nullptr;
 		auto handleStr = token(is);
 		if (handleStr == "c") {
-			handle = g_pCompositor->windowFromCursor();
+			throw std::invalid_argument("Broken");
+			// handle = g_pCompositor->windowFromCursor();
 		} else {
 			handleStr = handleStr.substr(handleStr.size() - 8);
 			uint32_t handleNum = std::stoul(handleStr, nullptr, 16);
@@ -91,9 +90,9 @@ private:
 		}
 	}
 
-	CWorkspace* toWorkspacePtr(Workspace w) {
+	std::shared_ptr<CWorkspace> toWorkspacePtr(Workspace w) {
 		auto w_id = toWorkspaceId(w);
-		CWorkspace* w_ptr = g_pCompositor->getWorkspaceByID(w_id);
+		auto w_ptr = g_pCompositor->getWorkspaceByID(w_id);
 		if (!w_ptr) {
 			w_ptr = g_pCompositor->createNewWorkspace(w_id, ID(), (w.isSpecial ? "special " : "") + std::to_string(w.id + 1));
 		}
@@ -148,7 +147,7 @@ public:
 	}
 
 	Workspace getActiveWorkspace() {
-		workspaceId active = ptr->activeWorkspace;
+		workspaceId active = ptr->activeWorkspace->m_iID;
 		return toWorkspace(active);
 	}
 
@@ -339,15 +338,15 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle)
 
 	resetAllMonitors();
 
-	HyprlandAPI::addConfigValue(PHANDLE, k_workspaceCount, SConfigValue{.intValue = 10});
-	HyprlandAPI::addConfigValue(PHANDLE, k_keepFocused, SConfigValue{.intValue = 0});
+	HyprlandAPI::addConfigValue(PHANDLE, k_workspaceCount, Hyprlang::INT{10});
+	HyprlandAPI::addConfigValue(PHANDLE, k_keepFocused, Hyprlang::INT{0});
 
 	HyprlandAPI::addDispatcher(PHANDLE, "change_workspace", focusWorkspace);
 	HyprlandAPI::addDispatcher(PHANDLE, "move_window_to_workspace", moveWindowToWorkspace);
 	HyprlandAPI::addDispatcher(PHANDLE, "toggle_special", toggleSpecial);
 
 	e_monitorAddedHandle = HyprlandAPI::registerCallbackDynamic(PHANDLE, "monitorAdded", onMonitorAdd);
-	// e_monitorRemovedHandle = HyprlandAPI::registerCallbackDynamic(PHANDLE, "monitorRemoved", refreshMapping);
+	//e_monitorRemovedHandle = HyprlandAPI::registerCallbackDynamic(PHANDLE, "monitorRemoved", refreshMapping);
 
 	return {"split-monitor-workspaces", "Split monitor workspace namespaces", "Duckonaut", "1.1.0"};
 }
