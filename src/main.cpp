@@ -13,8 +13,8 @@ const std::string k_workspaceCount = "plugin:split-monitor-workspaces:count";
 const std::string k_keepFocused = "plugin:split-monitor-workspaces:keep_focused";
 const CColor s_pluginColor = {0x61 / 255.0f, 0xAF / 255.0f, 0xEF / 255.0f, 1.0f};
 
-static HOOK_CALLBACK_FN* e_monitorAddedHandle = nullptr;
-static HOOK_CALLBACK_FN* e_monitorRemovedHandle = nullptr;
+static CSharedPointer<HOOK_CALLBACK_FN> e_monitorAddedHandle = nullptr;
+static CSharedPointer<HOOK_CALLBACK_FN> e_monitorRemovedHandle = nullptr;
 
 const uint32_t COUNT_PER_MONITOR = 10;
 const uint32_t SPECIAL_BASE = 1e5;
@@ -45,7 +45,7 @@ struct Workspace {
 };
 
 struct Window {
-	CWindow* handle;
+	PHLWINDOW handle;
 
 	Window(std::istream& is) {
 		handle = nullptr;
@@ -90,7 +90,7 @@ private:
 		}
 	}
 
-	std::shared_ptr<CWorkspace> toWorkspacePtr(Workspace w) {
+	PHLWORKSPACE toWorkspacePtr(Workspace w) {
 		auto w_id = toWorkspaceId(w);
 		auto w_ptr = g_pCompositor->getWorkspaceByID(w_id);
 		if (!w_ptr) {
